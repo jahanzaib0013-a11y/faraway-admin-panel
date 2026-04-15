@@ -5,7 +5,7 @@ import {
   RichTextEditorSections,
   YachtsData,
 } from "@/data/Yachts";
-import { MdDeleteOutline } from "react-icons/md";
+import { MdDeleteOutline, MdKeyboardArrowLeft } from "react-icons/md";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,12 +13,15 @@ import type { RootState, AppDispatch } from "@/lib/Store/store";
 import { toast, ToastContainer } from "react-toastify";
 import { useFormik } from "formik";
 import "react-toastify/dist/ReactToastify.css";
-import { addYachts } from "@/lib/Features/Yachts/addyachtsSlice";
+import { addYachts } from "@/lib/Features/Yachts/yachtsSlice";
 import {
   yachtsvalidationSchema,
   FormYachtsValues,
 } from "@/lib/Validation/addyachtsValidationSchema";
-import RichTextEditor from "./RichTextEditor";
+// import RichTextEditor from "./RichTextEditor";
+// import { Editor } from "react-draft-wysiwyg";
+// import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
+import Editor from "./Editor";
 
 type RichTextFieldKey =
   | "Price"
@@ -34,7 +37,6 @@ const AddNewYachts: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const loading = useSelector((state: RootState) => state.yachts.addLoading);
-
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -576,10 +578,20 @@ const AddNewYachts: React.FC = () => {
             <div key={section.id} className="mt-4 grid lg:grid-cols-2 gap-2">
               <p className="font-bold text-[#222222]">{section.label}</p>
               <div className="w-full">
-                <RichTextEditor
+                {/* <Editor
+                  value={formik.values[section.label as RichTextFieldKey] ?? ""}
+                  toolbarClassName="toolbarClassName"
+                  wrapperClassName="wrapperClassName"
+                  editorClassName="editorClassName"
+                /> */}
+                <Editor
                   value={formik.values[section.label as RichTextFieldKey] ?? ""}
                   onChange={(html) => formik.setFieldValue(section.label, html)}
                 />
+                {/* <RichTextEditor
+                  value={formik.values[section.label as RichTextFieldKey] ?? ""}
+                  onChange={(html) => formik.setFieldValue(section.label, html)}
+                /> */}
               </div>
             </div>
           );
@@ -677,7 +689,11 @@ const AddNewYachts: React.FC = () => {
             </div>
           );
         })}
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex items-center justify-between">
+          <button onClick={() => router.push("/yachts")} className="rounded-full px-[16px] py-[7px] border border-[#666666] text-[#222222] flex items-center gap-1 justify-center cursor-pointer font-medium">
+            <MdKeyboardArrowLeft />
+            Back
+          </button>
           <button
             type="submit"
             disabled={loading}
