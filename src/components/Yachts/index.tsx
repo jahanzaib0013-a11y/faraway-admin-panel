@@ -1,30 +1,22 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-import { FaRegHeart, FaHeart } from "react-icons/fa";
 import BreadCrum from "./BreadCrum";
 import { useSelector, useDispatch } from "react-redux";
 import { getYachts, deleteYachts } from "@/lib/Features/Yachts/yachtsSlice";
 import type { RootState, AppDispatch } from '@/lib/Store/store';
-import { CiCalendar } from "react-icons/ci";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { MdOutlineBathroom, MdClose } from "react-icons/md";
 import { TiTick } from "react-icons/ti";
 import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import { FaSailboat } from "react-icons/fa6";
 
 const YachtsDetail = () => {
 
-  const [favorites, setFavorites] = useState<Record<number, Record<number, boolean>>>({});
-  const [activeSlide, setActiveSlide] = useState(0);
-  const sliderRef = useRef<InstanceType<typeof Slider> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  console.log(searchTerm)
   const dispatch = useDispatch<AppDispatch>();
   const { allYachts, getLoading, totalPages, total } = useSelector((state: RootState) => state.yachts);
   const [currentPages, setCurrentPages] = useState(1);
@@ -37,27 +29,6 @@ const YachtsDetail = () => {
     dispatch(getYachts({ page: currentPages, limit: itemsPerPage }));
   }, [currentPages, itemsPerPage, dispatch]);
 
-  const toggleFavorite = (itemId: number, imgIndex: number) => {
-    setFavorites((prev) => ({
-      ...prev,
-      [itemId]: {
-        ...(prev[itemId] || {}),
-        [imgIndex]: !prev[itemId]?.[imgIndex] || false,
-      },
-    }));
-  };
-
-  const settings = {
-    dots: false,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000,
-    arrows: false,
-    afterChange: (index: number) => setActiveSlide(index),
-  };
 
   const filteredData = allYachts
     .filter(yachts =>
@@ -140,7 +111,7 @@ const YachtsDetail = () => {
                 {
                   id: 1,
                   img: "/images/Home/featured-ft.svg",
-                  label: yachtItem?.lengthRange ? `${yachtItem.lengthRange.replace(/[<>]/g, "")} ft` : null,
+                  label: yachtItem?.length ? `${yachtItem.length} ft` : null,
                 },
                 {
                   id: 2,
@@ -149,8 +120,8 @@ const YachtsDetail = () => {
                 },
                 {
                   id: 3,
-                  icon: CiCalendar,
-                  label: yachtItem?.built ?? null,
+                  icon: FaSailboat,
+                  label: yachtItem?.boatType ?? null,
                 },
               ];
               const Cabins = [
@@ -168,54 +139,13 @@ const YachtsDetail = () => {
               return (
                 <div key={yachtIndex} className="bg-white cursor-pointer border border-[#CECECE] rounded-lg shadow-md px-[8px] py-[8px] flex gap-4 items-center overflow-hidden" onClick={() => router.push(`/yachts/${yachtItem._id}`)}>
                   <div className="hidden md:block relative w-[37%] overflow-hidden">
-                    {yachtItem.galleryImages?.length > 1 ? (
-                      <div className="relative">
-                        <Slider ref={sliderRef} {...settings}>
-                          {yachtItem.galleryImages.map((imgSrc, index) => (
-                            <div key={index}>
-                              <Image
-                                src={imgSrc}
-                                alt={`Yacht image ${index + 1}`}
-                                width={300}
-                                height={258}
-                                className="w-full h-[260px] object-cover rounded-lg"
-                                priority={index === 0}
-                                unoptimized={true}
-                              />
-                            </div>
-                          ))}
-                        </Slider>
-                        <div className="flex gap-2 absolute left-1/3 bottom-[1.3rem]">
-                          {yachtItem.galleryImages.slice(0, 4).map((_, idx) => (
-                            <button
-                              key={idx}
-                              className={`w-[24px] h-[3px] cursor-pointer rounded-md bg-[#B0B0B0] ${idx === activeSlide ? "bg-white" : ""
-                                }`}
-                              onClick={() => sliderRef.current?.slickGoTo(idx)}
-                            ></button>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <Image
-                          src={yachtItem.galleryImages?.[0] || "/default.jpg"}
-                          alt="Yacht image"
-                          width={300}
-                          height={258}
-                          className="w-full h-[220px] object-cover"
-                          unoptimized={true}
-                        />
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2 text-[#F7F7F7]/50 text-[24px] cursor-pointer"
-                      onClick={() => toggleFavorite(yachtIndex, yachtIndex)}>
-                      {favorites[yachtIndex]?.[yachtIndex] ? (
-                        <FaHeart className="text-[#C3974C]" />
-                      ) : (
-                        <FaRegHeart />
-                      )}
-                    </div>
+                    <Image
+                      src={yachtItem?.primaryImage}
+                      alt="Yacht image"
+                      width={300}
+                      height={258}
+                      className="w-full h-[260px] object-cover rounded-lg"
+                    />
                   </div>
                   <div className="pt-[4px] border-r border-[#D1D1D1] pr-5 w-[70%]">
                     <h3 className="font-plusjakarta font-extrabold text-[19px] text-[#0061B1]">{yachtItem.title}</h3>

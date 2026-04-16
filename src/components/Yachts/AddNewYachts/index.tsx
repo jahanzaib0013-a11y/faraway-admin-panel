@@ -3,7 +3,6 @@
 import {
   NewYachtsData,
   RichTextEditorSections,
-  YachtsData,
 } from "@/data/Yachts";
 import { MdDeleteOutline, MdKeyboardArrowLeft } from "react-icons/md";
 import Image from "next/image";
@@ -18,14 +17,11 @@ import {
   yachtsvalidationSchema,
   FormYachtsValues,
 } from "@/lib/Validation/addyachtsValidationSchema";
-// import RichTextEditor from "./RichTextEditor";
-// import { Editor } from "react-draft-wysiwyg";
-// import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import Editor from "./Editor";
 
 type RichTextFieldKey =
-  | "Price"
-  | "Trip Details"
+  // | "Price"
+  // | "Trip Details"
   | "Day Charter"
   | "Overnight Charter"
   | "About this Boat"
@@ -114,20 +110,18 @@ const AddNewYachts: React.FC = () => {
       "Day Trip Price": "",
       "Overnight Price": "",
       "Daytrip Price (Euro)": "",
-      "Daytrip Price (THB)": "",
-      "Daytrip Price (USD)": "",
+      // "Daytrip Price (THB)": "",
+      // "Daytrip Price (USD)": "",
       "Primary Image": null as unknown as File,
       "Gallery Images": [] as File[],
-      Price: "",
-      "Trip Details": "",
+      // Price: "",
+      // "Trip Details": "",
       "Day Charter": "",
       "Overnight Charter": "",
       "About this Boat": "",
       Specifications: "",
       "Boat Layout": "",
       "Video Link": "",
-      "Video Link 2": "",
-      "Video Link 3": "",
       Badge: "",
       Design: "",
       Built: "",
@@ -159,20 +153,20 @@ const AddNewYachts: React.FC = () => {
             "Day Trip Price": true,
             "Overnight Price": true,
             "Daytrip Price (Euro)": true,
-            "Daytrip Price (THB)": true,
-            "Daytrip Price (USD)": true,
+            // "Daytrip Price (THB)": true,
+            // "Daytrip Price (USD)": true,
             "Primary Image": {},
             "Gallery Images": true,
-            Price: true,
-            "Trip Details": true,
+            // Price: true,
+            // "Trip Details": true,
             "Day Charter": true,
             "Overnight Charter": true,
             "About this Boat": true,
             Specifications: true,
             "Boat Layout": true,
             "Video Link": true,
-            "Video Link 2": true,
-            "Video Link 3": true,
+            // "Video Link 2": true,
+            // "Video Link 3": true,
             Badge: true,
             Design: true,
             Built: true,
@@ -203,27 +197,27 @@ const AddNewYachts: React.FC = () => {
             dayTripPrice: values["Day Trip Price"],
             overnightPrice: values["Overnight Price"],
             daytripPriceEuro: values["Daytrip Price (Euro)"],
-            daytripPriceTHB: values["Daytrip Price (THB)"],
-            daytripPriceUSD: values["Daytrip Price (USD)"],
+            // daytripPriceTHB: values["Daytrip Price (THB)"] ?? "",
+            // daytripPriceUSD: values["Daytrip Price (USD)"] ?? "",
             primaryImage: values["Primary Image"] as File,
             galleryImages: values["Gallery Images"] as File[],
-            priceEditor: values["Price"] ?? "",
-            tripDetailsEditor: values["Trip Details"] ?? "",
+            // priceEditor: values["Price"] ?? "",
+            // tripDetailsEditor: values["Trip Details"] ?? "",
             dayCharter: values["Day Charter"] ?? "",
             overnightCharter: values["Overnight Charter"] ?? "",
             aboutThisBoat: values["About this Boat"] ?? "",
             specifications: values["Specifications"] ?? "",
             boatLayout: values["Boat Layout"] ?? "",
-            videoLink: values["Video Link"],
-            videoLink2: values["Video Link 2"] ?? "",
-            videoLink3: values["Video Link 3"] ?? "",
+            videoLink: values["Video Link"] ?? "",
+            // videoLink2: values["Video Link 2"] ?? "",
+            // videoLink3: values["Video Link 3"] ?? "",
             badge: values["Badge"] ?? "",
-            design: values["Design"],
-            built: values["Built"],
-            cruisingSpeed: values["Cruising Speed"],
-            lengthOverall: values["Length Overall"],
-            fuelCapacity: values["Fuel Capacity"],
-            waterCapacity: values["Water Capacity"],
+            design: values["Design"] ?? "",
+            built: values["Built"] ?? "",
+            cruisingSpeed: values["Cruising Speed"] ?? "",
+            lengthOverall: values["Length Overall"] ?? "",
+            fuelCapacity: values["Fuel Capacity"] ?? "",
+            waterCapacity: values["Water Capacity"] ?? "",
             code: values["Code"] ?? "",
             type: values["Type"],
           })
@@ -277,6 +271,7 @@ const AddNewYachts: React.FC = () => {
                     formik.values[field.label as keyof typeof formik.values] ??
                     "";
                   const isDropdown = field.type === "dropdown";
+                  const isNumber = ["Length", "Cabins", "Bathrooms", "Passenger Day Trip", "Passenger Overnight", "Guests", "Day Trip Price", "Overnight Price", "Daytrip Price (Euro)", "Built", "Cruising Speed", "Length Overall", "Fuel Capacity", "Water Capacity"].includes(field.label);
                   const isPrimaryUpload = field.label === "Primary Image";
                   const isFileUpload = field.label === "Gallery Images";
                   const isCheckbox = field.type === "checkbox";
@@ -350,7 +345,6 @@ const AddNewYachts: React.FC = () => {
                           <span className="text-red-500">*</span>
                         )}
                       </div>
-
                       {isDropdown ? (
                         <>
                           <div
@@ -401,7 +395,7 @@ const AddNewYachts: React.FC = () => {
                                 name="Primary Image"
                                 accept="image/*"
                                 onChange={handleImageChange}
-                                className="cursor-pointer"
+                                className="cursor-pointer w-full"
                               />
                             ) : (
                               <>
@@ -543,6 +537,38 @@ const AddNewYachts: React.FC = () => {
                             </p>
                           )}
                         </>
+                      ) : isNumber ? (
+                        <>
+                          <input
+                            type="number"
+                            name={fieldName}
+                            placeholder={field.placeholder}
+                            value={
+                              typeof formik.values[fieldName] === "string" || typeof formik.values[fieldName] === "number"
+                                ? formik.values[fieldName]
+                                : ""
+                            }
+                            onChange={(e) => {
+                              formik.handleChange(e);
+                              formik.setFieldTouched(fieldName, true, false);
+                            }}
+                            onBlur={formik.handleBlur}
+                            className={`placeholder:text-[#999999] outline-none text-[#222222] w-full bg-[#F0F2F4] rounded-lg px-3 py-2  ${fieldError ? "border border-[#DB2828]" : ""
+                              }`}
+                            onWheel={e => e.currentTarget.blur()}
+                            onKeyDown={e => {
+                              if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                                e.preventDefault();
+                              }
+                            }}
+                          />
+                          {fieldError && (
+                            <p className="text-[#DB2828] text-sm mt-1">
+                              {typeof formik.errors[fieldName] === "string" &&
+                                formik.errors[fieldName]}
+                            </p>
+                          )}
+                        </>
                       ) : (
                         <>
                           <input
@@ -578,119 +604,16 @@ const AddNewYachts: React.FC = () => {
             <div key={section.id} className="mt-4 grid lg:grid-cols-2 gap-2">
               <p className="font-bold text-[#222222]">{section.label}</p>
               <div className="w-full">
-                {/* <Editor
-                  value={formik.values[section.label as RichTextFieldKey] ?? ""}
-                  toolbarClassName="toolbarClassName"
-                  wrapperClassName="wrapperClassName"
-                  editorClassName="editorClassName"
-                /> */}
                 <Editor
                   value={formik.values[section.label as RichTextFieldKey] ?? ""}
                   onChange={(html) => formik.setFieldValue(section.label, html)}
                 />
-                {/* <RichTextEditor
-                  value={formik.values[section.label as RichTextFieldKey] ?? ""}
-                  onChange={(html) => formik.setFieldValue(section.label, html)}
-                /> */}
-              </div>
-            </div>
-          );
-        })}
-        {YachtsData.map((section, sectionIndex) => {
-          return (
-            <div key={sectionIndex} className="mt-4">
-              {section.section && (
-                <h2
-                  className={`font-bold mb-2 text-[#001B48] text-[24px] pb-2 border-b border-[#CCCCCC]`}
-                >
-                  {section.section}
-                </h2>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-                {section.fields.map((field, index) => {
-                  const fieldName = field.label as keyof FormYachtsValues;
-                  const isDropdown = field.type === "dropdown";
-                  const value =
-                    formik.values[field.label as keyof typeof formik.values] ??
-                    "";
-                  const fieldError = getFieldError(fieldName);
-                  return (
-                    <div key={index}>
-                      <label className="block font-bold text-[#222222] mb-2">
-                        {field.label}
-                      </label>
-                      <div>
-                        {isDropdown ? (
-                          <>
-                            <div
-                              className={`bg-[#F0F2F4] rounded-lg px-3 py-2 w-full ${fieldError ? "border border-[#DB2828]" : ""
-                                }`}
-                            >
-                              <select
-                                name={fieldName}
-                                value={formik.values[fieldName] as string}
-                                onChange={(e) => {
-                                  formik.handleChange(e);
-                                  formik.setFieldTouched(fieldName, true, false);
-                                }}
-                                onBlur={formik.handleBlur}
-                                className={`w-full outline-0 cursor-pointer ${value ? "text-[#222222]" : "text-[#999999]"
-                                  }`}
-                              >
-                                <option value="" disabled hidden>
-                                  {field.placeholder}
-                                </option>
-                                {field.options?.map((option) => (
-                                  <option
-                                    key={option}
-                                    value={option}
-                                    className="text-[#222222] outline-0 pt-4"
-                                  >
-                                    {option}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            {fieldError && (
-                              <p className="text-[#DB2828] text-sm mt-1">
-                                {typeof formik.errors[fieldName] === "string" &&
-                                  formik.errors[fieldName]}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <input
-                              type="text"
-                              name={fieldName}
-                              placeholder={field.placeholder}
-                              value={formik.values[fieldName] as string}
-                              onChange={(e) => {
-                                formik.handleChange(e);
-                                formik.setFieldTouched(fieldName, true, false);
-                              }}
-                              onBlur={formik.handleBlur}
-                              className={`placeholder:text-[#999999] outline-none text-[#222222] w-full bg-[#F0F2F4] rounded-lg px-3 py-2  ${fieldError ? "border border-[#DB2828]" : ""
-                                }`}
-                            />
-                            {fieldError && (
-                              <p className="text-[#DB2828] text-sm mt-1">
-                                {typeof formik.errors[fieldName] === "string" &&
-                                  formik.errors[fieldName]}
-                              </p>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           );
         })}
         <div className="mt-6 flex items-center justify-between">
-          <button onClick={() => router.push("/yachts")} className="rounded-full px-[16px] py-[7px] border border-[#666666] text-[#222222] flex items-center gap-1 justify-center cursor-pointer font-medium">
+          <button type="button" onClick={() => router.push("/yachts")} className="rounded-full px-[16px] py-[7px] border border-[#666666] text-[#222222] flex items-center gap-1 justify-center cursor-pointer font-medium">
             <MdKeyboardArrowLeft />
             Back
           </button>
