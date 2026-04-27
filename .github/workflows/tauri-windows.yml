@@ -1,0 +1,120 @@
+name: Build Tauri (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'src-tauri/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'package-lock.json'
+      - 'yarn.lock'
+      - 'next.config.*'
+      - 'src/**'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust (stable MSVC)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Assemble Next standalone into Tauri resources
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/server/standalone" | Out-Null
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/server/.next/static" | Out-Null
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/server/public" | Out-Null
+
+          if (Test-Path ".next/standalone") {
+            if (Test-Path "src-tauri/resources/server/standalone") { Remove-Item "src-tauri/resources/server/standalone" -Recurse -Force }
+            Copy-Item ".next/standalone" "src-tauri/resources/server/" -Recurse -Force
+          }
+
+          if (Test-Path ".next/static") {
+            if (Test-Path "src-tauri/resources/server/.next/static") { Remove-Item "src-tauri/resources/server/.next/static" -Recurse -Force }
+            New-Item -ItemType Directory -Force -Path "src-tauri/resources/server/.next" | Out-Null
+            Copy-Item ".next/static" "src-tauri/resources/server/.next/" -Recurse -Force
+          }
+
+          if (Test-Path "public") {
+            if (Test-Path "src-tauri/resources/server/public") { Remove-Item "src-tauri/resources/server/public" -Recurse -Force }
+            Copy-Item "public" "src-tauri/resources/server/" -Recurse -Force
+          }
+
+          $serverJs = @'
+          // Launcher for Next standalone in Tauri sidecar
+          const path = require('path');
+          const PORT = process.env.PORT || '5173';
+          const HOSTNAME = process.env.HOSTNAME || '127.0.0.1';
+          // Execute the standalone server.js in-process
+          require(path.join(__dirname, 'standalone', 'server.js'));
+          '@
+          Set-Content -Path "src-tauri/resources/server/server.js" -Value $serverJs -Encoding UTF8
+
+      - name: Embed portable Node runtime (Windows)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $nodeVersion = '20.19.5'
+          $zipUrl = "https://nodejs.org/dist/v$nodeVersion/node-v$nodeVersion-win-x64.zip"
+          $zipPath = "$env:RUNNER_TEMP\\node.zip"
+          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+          $extractDir = "$env:RUNNER_TEMP\\node"
+          if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
+          Expand-Archive -LiteralPath $zipPath -DestinationPath $extractDir
+          $nodeExe = Get-ChildItem -Path $extractDir -Recurse -Filter node.exe | Select-Object -First 1
+          New-Item -ItemType Directory -Force -Path "src-tauri/resources/server/node" | Out-Null
+          Copy-Item $nodeExe.FullName "src-tauri/resources/server/node/node.exe" -Force
+
+      - name: Debug info (Node and resources)
+        shell: powershell
+        run: |
+          node -v
+          Get-ChildItem -Recurse -File src-tauri/resources/server | Measure-Object
+          Get-ChildItem -Recurse -File src-tauri/resources/server | Select-Object -First 20 | Format-List
+
+      - name: Build Tauri (Windows)
+        env:
+          TAURI_LOG_LEVEL: debug
+          RUST_BACKTRACE: 1
+        run: npx tauri build -- -vv
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-windows-bundle
+          path: |
+            src-tauri/target/release/bundle/**
+          if-no-files-found: warn
