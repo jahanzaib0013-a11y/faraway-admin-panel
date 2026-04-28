@@ -1,39 +1,76 @@
-# Faraway Admin Panel — Desktop App (Tauri)
+# Liquid DMS — Admin Panel
 
-This repository contains the Faraway Admin Panel built with Next.js and Tauri.
-It ships as a native Windows desktop application via Tauri (small installer, low memory).
+> Desktop-first admin panel for a yacht-rental document management system. Next.js (App Router) front end, an embedded Express/Mongoose API, and native Windows packaging via **Tauri**.
 
-## Scripts
+![Stack](https://img.shields.io/badge/next.js-14-black)
+![Desktop](https://img.shields.io/badge/desktop-tauri-orange)
+![API](https://img.shields.io/badge/api-express-green)
 
-- `npm run dev` — Next.js dev server (http://localhost:3001)
-- `npm run dev:tauri` — Next.js + Tauri in development
-- `npm run build` — Next.js production build
-- `npm run build:tauri` — Build Windows installer/bundle via Tauri
+## Overview
 
-## Development
+This repo is the **operator/admin side** of the Liquid DMS product (internal codenames *Faraway* / *SailAway*). It lets an operator manage their fleet and paperwork from a single desktop application:
 
-1) Install prerequisites (Windows):
-   - Rust toolchain (MSVC) via https://rustup.rs
-   - Visual Studio Build Tools ("Desktop development with C++")
-2) Install Node dependencies: `npm ci`
-3) Run Tauri dev: `npm run dev:tauri`
+- **Authentication** — operator login and session management (JWT + bcrypt).
+- **Dashboard** — fleet and booking KPIs with charts.
+- **Yachts** — listing management with rich-text editors (TipTap / CKEditor / Editor.js) for descriptions and policies.
+- **Media** — image/document uploads to S3 and Cloudinary (multer + `@aws-sdk`).
+- **Settings** — profile and application configuration.
 
-Tauri dev will open a desktop window that loads your Next dev server.
+The `backend/` directory contains an Express MVC service (Mongoose models, controllers, routers, validation, middleware) that the panel talks to, so the whole system can run locally as a self-contained desktop app.
 
-## Production Build
+## Architecture
 
-Build the desktop app:
-
-```powershell
-npm ci
-npm run build
-npx tauri build
+```
+src/                 Next.js App Router front end
+  app/(auth)         login / session screens
+  app/(root)         dashboard, yachts, settings
+  components/        Dashboard, Yachts, SailAwayCard, Sidebar, Header, Drawer, ...
+  lib, common, data, types
+backend/             Express API (models, controllers, router, middleware, validations)
+src-tauri/           Tauri (Rust) native shell -> Windows installer
+tools/voice/         local TTS/STT utilities
 ```
 
-By default, dev loads `http://localhost:3001`. For production, you can:
-- Use static export (no SSR) and point Tauri to static files, or
-- Run a local server (sidecar) for SSR and point the Tauri window to `http://127.0.0.1:<port>`.
+The app began as a web admin and was packaged for desktop: first with **Electron**, then migrated to **Tauri** for a small installer and low memory footprint.
 
-## Notes
+## Getting started
 
-- Voice utilities are available under `tools/voice/` for local TTS/STT.
+```bash
+npm ci              # install dependencies
+npm run dev         # Next.js dev server on http://localhost:3001
+```
+
+Backend (separate service):
+
+```bash
+cd backend && npm ci && npm start
+```
+
+### Desktop (Tauri)
+
+Prerequisites (Windows): Rust toolchain (MSVC) from https://rustup.rs and Visual Studio Build Tools (“Desktop development with C++”).
+
+```bash
+npm run dev:tauri      # Next.js + Tauri window in development
+npm run build          # production Next.js build
+npm run build:tauri    # build Windows installer/bundle via Tauri
+```
+
+By default the shell loads `http://localhost:3001`. For production either use a static export pointed at local files, or run a sidecar server and point the Tauri window at `http://127.0.0.1:<port>`.
+
+## Tech stack
+
+| Layer | Choice |
+| --- | --- |
+| Framework | Next.js (App Router), React |
+| State | Redux Toolkit |
+| Styling | Tailwind CSS, shadcn/ui, Radix, lucide-react |
+| Editors | TipTap, CKEditor 5, Editor.js |
+| API | Express, Mongoose, JWT, express-validator, helmet, rate-limit |
+| Storage | AWS S3, Cloudinary, multer |
+| Charts | Recharts |
+| Desktop | Tauri (Rust) |
+
+## License
+
+© [Jahanzaib Iftikhar](https://github.com/jahanzaib0013-a11y)
